@@ -60,18 +60,18 @@ def write_hdf5(output_dir_path: str, output_data_dict: Dict[str, List[Union[np.n
     else:
         frame_offset = 0
 
-    if amount_of_frames != bpy.context.scene.frame_end - bpy.context.scene.frame_start:
+    if amount_of_frames != (bpy.context.scene.frame_end - bpy.context.scene.frame_start-1)//bpy.context.scene.frame_step+1:
         raise Exception("The amount of images stored in the output_data_dict does not correspond with the amount"
                         "of images specified by frame_start to frame_end.")
 
-    for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end):
+    for frame in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end, bpy.context.scene.frame_step):
         # for each frame a new .hdf5 file is generated
         hdf5_path = os.path.join(output_dir_path, str(frame + frame_offset) + ".hdf5")
         with h5py.File(hdf5_path, "w") as file:
             # Go through all the output types
             print(f"Merging data for frame {frame} into {hdf5_path}")
 
-            adjusted_frame = frame - bpy.context.scene.frame_start
+            adjusted_frame = (frame - bpy.context.scene.frame_start-1)//bpy.context.scene.frame_step+1
             for key, data_block in output_data_dict.items():
                 if adjusted_frame < len(data_block):
                     # get the current data block for the current frame
@@ -111,7 +111,7 @@ class _WriterUtility:
                     'key'] in keys_with_alpha_channel
                 if '%' in reg_out['path']:
                     # per frame outputs
-                    for frame_id in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end):
+                    for frame_id in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end, bpy.context.scene.frame_step):
                         output_path = resolve_path(reg_out['path'] % frame_id)
                         if os.path.exists(output_path):
                             output_file = _WriterUtility.load_output_file(output_path, key_has_alpha_channel)
